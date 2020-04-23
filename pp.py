@@ -22,6 +22,7 @@
 import requests
 import os, sys
 import urllib.parse
+#import xlrd
 from bs4 import BeautifulSoup
 from fuzzywuzzy import fuzz
 
@@ -86,6 +87,10 @@ def main():
         err("Invalid input arguments: " + sys.argv[0] + " [<input-file>|<paper-title>]")
         sys.exit(1)
 
+    # TODO check file type
+    # if XLS convert to XLSX (corrupt cannot read via XLRD)
+    # See https://medium.com/@jerilkuriakose/recover-corrupt-excel-file-xls-or-xlsx-using-python-2eea6bb07aae
+
     titles = []
     input = sys.argv[1]
     if is_valid_file(input):
@@ -103,10 +108,10 @@ def main():
 
         # check direct or partial ratio match on title
         for result in results:
-            direct = fuzz.ratio(title, result["title"])
-            # need at least 80% or better match
-            if direct < 80:
+            if title in result["title"] is False:
                 continue
+
+            direct = fuzz.ratio(title, result["title"])
             partial = fuzz.partial_ratio(title, result["title"])
 
             # output results
