@@ -23,6 +23,7 @@ import requests
 import os, sys
 import urllib.parse
 from bs4 import BeautifulSoup
+from fuzzywuzzy import fuzz
 
 def err(s=None):
     """
@@ -51,7 +52,7 @@ def search(paper_title=None):
     params = {'q': paper_title}
     query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
     url = SEARCH_URL + query
-    print(url)
+    #print(url)
 
     # desktop user-agent; expected by google in HTTP header
     headers = {"user-agent" : USER_AGENT}
@@ -75,19 +76,18 @@ def search(paper_title=None):
                 "link": link
             }
             results.append(item)
-    print(results)
+    return results
 
 def main():
     global SEARCH_URL
     global USER_AGENT
 
     if len(sys.argv) < 2:
-        err("Invalid input arguments")
+        err("Invalid input arguments: " + sys.argv[0] + " [<input-file>|<paper-title>]")
         sys.exit(1)
 
     titles = []
     input = sys.argv[1]
-    print(input)
     if is_valid_file(input):
         # read input file
         pass # read files
@@ -95,13 +95,26 @@ def main():
         # invalid file treat cmd line arg as title to search directly for
         titles.append(input)
 
-    # search on title
+    # search on title - only initial top 10 results from Google
+    hdr_shown = False
     for title in titles:
-        search(title)
+        results = search(title)
+        #print(results)
 
-    # direct much on title
+        # check direct or partial ratio match on title
+        for result in results:
+            direct = fuzz.ratio(title, result["title"])
+            # need at least 80% or better match
+            if direct < 80:
+                continue
+            partial = fuzz.partial_ratio(title, result["title"])
 
-    # no direct match fuzzy match
+            # output results
+            if not hdr_shown:
+                print("Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
+                hdr_shown = True
+            print("%s,%s,%.2f,%.2f,%s" % (title, result["title"], direct, partial, result["link"]))
+
     sys.exit(0)
 
 # ----------------------------------------------------------------------
