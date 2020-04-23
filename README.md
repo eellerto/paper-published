@@ -8,7 +8,7 @@ search result from google (the title matches).
 
 The following steps are for one-time only setup to install & run the program.
 
-Create new virtual environment inside the directory
+Create new virtual environment inside the working directory
 
 ```
 python3 -m venv env
@@ -38,7 +38,7 @@ source env/bin/activate
 
 Execute Script
 ```
-python3 scrapper.py
+python3 pp.py [<input-file>|<paper-title>]
 ```
 
 Deactivate the environment
