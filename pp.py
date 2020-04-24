@@ -108,6 +108,10 @@ def read_file(filename=None):
     # TODO append file read
     return result
 
+# ----------------------------------------------------------------------
+# M A I N  L O G I C
+# ----------------------------------------------------------------------
+
 def main():
     global SEARCH_URL
     global USER_AGENT
@@ -155,9 +159,6 @@ def main():
 
     sys.exit(0)
 
-# ----------------------------------------------------------------------
-# M A I N  L O G I C
-# ----------------------------------------------------------------------
 SEARCH_URL = "https://google.com/search?"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
 
