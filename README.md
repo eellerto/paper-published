@@ -38,7 +38,7 @@ source env/bin/activate
 
 Execute Script
 ```
-python3 pp.py [<input-file>|<paper-title>]
+python3 pp.py [<excel-input-file>|<paper-title>]
 ```
 
 Deactivate the environment
