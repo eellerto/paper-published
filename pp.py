@@ -8,7 +8,7 @@
 # If able to process successfully will print results
 # to standard out.
 #
-# python3 pp.py [<input-file>|<title]>
+# python3 pp.py [<excel-input-file>|<title]>
 #
 # input-file: XLS or CVS of papers' corresponding titles to search
 # title: individual paper title (string) to search on
@@ -21,6 +21,7 @@
 
 import requests
 import os, sys
+import puremagic
 import urllib.parse
 #import xlrd
 from bs4 import BeautifulSoup
@@ -79,12 +80,40 @@ def search(paper_title=None):
             results.append(item)
     return results
 
+def is_filetype(filename=None, search_str=None):
+    """
+    Applies magic byte (header) inspection to determine if of search file type.
+    """
+    if not search_str:
+        return False
+    results = puremagic.magic_file(filename)
+    for result in results:
+        if search_str.lower() in result.name.lower():
+            return True
+    return False
+
+def xls_to_xlsx(filename=None):
+    """
+    Attempts to convert legacy XLS (Excel) file to XLSX (newer) version for processing
+    """
+    pass
+
+def read_file(filename=None):
+    """
+    Reads file contents and returns as list of strings
+    """
+    result = []
+    if not filename:
+        return result
+    # TODO append file read
+    return result
+
 def main():
     global SEARCH_URL
     global USER_AGENT
 
     if len(sys.argv) < 2:
-        err("Invalid input arguments: " + sys.argv[0] + " [<input-file>|<paper-title>]")
+        err("Invalid input arguments: " + sys.argv[0] + " [<excel-input-file>|<paper-title>]")
         sys.exit(1)
 
     # TODO check file type
@@ -93,7 +122,11 @@ def main():
 
     titles = []
     input = sys.argv[1]
+
     if is_valid_file(input):
+        if is_filetype(input, "Microsoft Excel") is False:
+            # possibly correct file via Cognos and XLS try to convert to XLSX
+            print("Convert to XLSX")
         # read input file
         pass # read files
     else:
