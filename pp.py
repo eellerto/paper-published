@@ -20,10 +20,10 @@
 # ********************************************************
 
 import requests
-import os, sys
+import io, os, sys
 import puremagic
 import urllib.parse
-#import xlrd
+import xlrd
 from bs4 import BeautifulSoup
 from fuzzywuzzy import fuzz
 
@@ -95,18 +95,25 @@ def is_filetype(filename=None, search_str=None):
 def xls_to_xlsx(filename=None):
     """
     Attempts to convert legacy XLS (Excel) file to XLSX (newer) version for processing
+    Needed b/c Cognos is garbage and sends corrupted legacy XLS files via download.
     """
+    xls_file= io.open(filename, "r", encoding="utf-16")
+    data = xls_file.readlines()
+    # create and save a new Excel workbook
+    # https://medium.com/@jerilkuriakose/recover-corrupt-excel-file-xls-or-xlsx-using-python-2eea6bb07aae
     pass
 
-def read_file(filename=None):
+def read_xlsx(filename=None):
     """
-    Reads file contents and returns as list of strings
+    Reads file contents and returns a list of pairs including
+    each manuscript id and corresponding manuscript title.
     """
-    result = []
+    results = []
     if not filename:
-        return result
+        return results
     # TODO append file read
-    return result
+    # find column header w/ manuscript's id and title
+    return results
 
 def main():
     global SEARCH_URL
@@ -127,8 +134,10 @@ def main():
         if is_filetype(input, "Microsoft Excel") is False:
             # possibly correct file via Cognos and XLS try to convert to XLSX
             print("Convert to XLSX")
+            #xls_to_xlsx(input)
         # read input file
-        pass # read files
+        data = read_xlsx(input)
+        print(data)
     else:
         # invalid file treat cmd line arg as title to search directly for
         titles.append(input)
