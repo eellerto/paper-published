@@ -23,7 +23,7 @@ import requests
 import io, os, sys, csv, time
 import puremagic
 import urllib.parse
-import xlrd
+import xlrd, mmap
 from bs4 import BeautifulSoup
 from fuzzywuzzy import fuzz
 
@@ -92,27 +92,45 @@ def is_filetype(filename=None, search_str=None):
             return True
     return False
 
-def xls_to_xlsx(filename=None):
-    """
-    Attempts to convert legacy XLS (Excel) file to XLSX (newer) version for processing
-    Needed b/c Cognos is garbage and sends corrupted legacy XLS files via download.
-    """
-    xls_file= io.open(filename, "r", encoding="utf-16")
-    data = xls_file.readlines()
-    # create and save a new Excel workbook
-    # https://medium.com/@jerilkuriakose/recover-corrupt-excel-file-xls-or-xlsx-using-python-2eea6bb07aae
-    pass
-
-def read_xlsx(filename=None):
+def extract_xlsx(fname=None, search_hdrs=None):
     """
     Reads file contents and returns a list of pairs including
     each manuscript id and corresponding manuscript title.
     """
     results = []
-    if not filename:
+
+    if fname is None or search_hdrs is None:
+        err("Invalid CSV extraction for filename and column headers: " + fname + " ".join(search_hdrs))
         return results
-    # TODO append file read
-    # find column header w/ manuscript's id and title
+
+    # extract corresponding data rows to columns for specific headers
+    wb = xlrd.open_workbook(fname)
+    ws = wb.sheet_by_index(0)
+
+    # find index headers occur
+    headers = []
+    for i in range(len(ws.row(0))):
+        if ws.row(0)[i].value in search_hdrs:
+            item = {
+                "header": ws.row(0)[i].value,
+                "index": i
+            }
+            headers.append(item)
+
+    # extract data after first row
+    results = []
+    for i in range(1, ws.nrows):
+        result = {}
+        for hdr in headers:
+            #print(hdr.get("header"))
+            #print(ws.row(i)[hdr.get("index")].value)
+            item = {
+                hdr.get("header"): ws.row(i)[hdr.get("index")].value
+            }
+            result.update(item)
+        results.append(result)
+
+    #print(results)
     return results
 
 def extract_csv(fname=None, search_hdrs=None):
@@ -151,27 +169,20 @@ def main():
         err("Invalid input arguments: " + sys.argv[0] + " [<excel-input-file>|<paper-title>]")
         sys.exit(1)
 
-    # TODO check file type
-    # if XLS convert to XLSX (corrupt cannot read via XLRD)
-    # See https://medium.com/@jerilkuriakose/recover-corrupt-excel-file-xls-or-xlsx-using-python-2eea6bb07aae
-
     search_records = []
     input = sys.argv[1]
 
     if is_valid_file(input):
         if input.endswith('.csv'):
             data = extract_csv(input, FILE_SEARCH_HDRS)
-        elif is_filetype(input, "Microsoft Excel") is False:
-            # possibly correct file via Cognos and XLS try to convert to XLSX
-            print("Convert to XLSX")
-            #xls_to_xlsx(input)
-        # TODO fix when/read
-        # read input file
-            data = read_xlsx(input)
-        #print(data)
+        elif input.endswith('.xlsx'):
+            data = extract_xlsx(input, FILE_SEARCH_HDRS)
+        else:
+            err("Unsupport file type - cannot convert: " + input)
+            sys.exit(2)
         search_records = data
     else:
-        # invalid file treat cmd line arg as title to search directly for
+        # invalid file not exist - treat cmd line arg as title to search directly via Google
         item = {
             ID: "NA",
             TITLE: input
