@@ -8,7 +8,7 @@
 # If able to process successfully will print results
 # to standard out.
 #
-# python3 pp.py [<excel-input-file>|<title]>
+# python3 pp.py [<input-file>|<title]>
 #
 # input-file: XLS or CVS of papers' corresponding titles to search
 # title: individual paper title (string) to search on
@@ -166,7 +166,7 @@ def main():
     global TITLE
 
     if len(sys.argv) < 2:
-        err("Invalid input arguments: " + sys.argv[0] + " [<excel-input-file>|<paper-title>]")
+        err("Invalid input arguments: " + sys.argv[0] + " [<input-file>|<paper-title>]")
         sys.exit(1)
 
     search_records = []
