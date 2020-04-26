@@ -20,7 +20,7 @@
 # ********************************************************
 
 import requests
-import io, os, sys
+import io, os, sys, csv
 import puremagic
 import urllib.parse
 import xlrd
@@ -115,6 +115,29 @@ def read_xlsx(filename=None):
     # find column header w/ manuscript's id and title
     return results
 
+def extract_csv(fname=None, search_hdrs=None):
+    '''
+    Reads a CSV file and extracts all rows for column header names requested.
+    Returns a list of pairs dictionary with column name and corresponding row value in matrix
+    '''
+    results = []
+
+    if fname is None or search_hdrs is None:
+        err("Invalid CSV extraction for filename and column headers: " + fname + " ".join(search_hdrs))
+        return results
+
+    result = {}
+
+    # extract corresponding data rows to columns for specific headers
+    with open(fname, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for line in reader:
+            result = dict((k, line[k]) for k in search_hdrs if k in line)
+            #print(result)
+            results.append(result)
+
+    return results
+
 # ----------------------------------------------------------------------
 # M A I N  L O G I C
 # ----------------------------------------------------------------------
@@ -122,6 +145,7 @@ def read_xlsx(filename=None):
 def main():
     global SEARCH_URL
     global USER_AGENT
+    global FILE_SEARCH_HDRS
 
     if len(sys.argv) < 2:
         err("Invalid input arguments: " + sys.argv[0] + " [<excel-input-file>|<paper-title>]")
@@ -135,12 +159,15 @@ def main():
     input = sys.argv[1]
 
     if is_valid_file(input):
-        if is_filetype(input, "Microsoft Excel") is False:
+        if input.endswith('.csv'):
+            data = extract_csv(input, FILE_SEARCH_HDRS)
+        elif is_filetype(input, "Microsoft Excel") is False:
             # possibly correct file via Cognos and XLS try to convert to XLSX
             print("Convert to XLSX")
             #xls_to_xlsx(input)
+        # TODO fix when/read
         # read input file
-        data = read_xlsx(input)
+            data = read_xlsx(input)
         print(data)
     else:
         # invalid file treat cmd line arg as title to search directly for
@@ -170,6 +197,7 @@ def main():
 
 SEARCH_URL = "https://google.com/search?"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
+FILE_SEARCH_HDRS = ['Manuscript ID', 'Manuscript Title']
 
 if __name__ == "__main__":
     main()
