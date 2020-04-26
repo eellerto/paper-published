@@ -3,7 +3,7 @@
 # ********************************************************
 # Script validates if paper title was published or not.
 #
-# Handles reading input file and checking against
+# Handles rcading input file and checking against
 # Google to determine if previously published or not.
 # If able to process successfully will print results
 # to standard out.
@@ -20,7 +20,7 @@
 # ********************************************************
 
 import requests
-import io, os, sys, csv
+import io, os, sys, csv, time
 import puremagic
 import urllib.parse
 import xlrd
@@ -118,7 +118,7 @@ def read_xlsx(filename=None):
 def extract_csv(fname=None, search_hdrs=None):
     '''
     Reads a CSV file and extracts all rows for column header names requested.
-    Returns a list of pairs dictionary with column name and corresponding row value in matrix
+    Returns a list of dictionary with column name and corresponding row value in matrix
     '''
     results = []
 
@@ -127,7 +127,6 @@ def extract_csv(fname=None, search_hdrs=None):
         return results
 
     result = {}
-
     # extract corresponding data rows to columns for specific headers
     with open(fname, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -146,6 +145,7 @@ def main():
     global SEARCH_URL
     global USER_AGENT
     global FILE_SEARCH_HDRS
+    global TITLE
 
     if len(sys.argv) < 2:
         err("Invalid input arguments: " + sys.argv[0] + " [<excel-input-file>|<paper-title>]")
@@ -155,7 +155,7 @@ def main():
     # if XLS convert to XLSX (corrupt cannot read via XLRD)
     # See https://medium.com/@jerilkuriakose/recover-corrupt-excel-file-xls-or-xlsx-using-python-2eea6bb07aae
 
-    titles = []
+    search_records = []
     input = sys.argv[1]
 
     if is_valid_file(input):
@@ -168,36 +168,53 @@ def main():
         # TODO fix when/read
         # read input file
             data = read_xlsx(input)
-        print(data)
+        #print(data)
+        search_records = data
     else:
         # invalid file treat cmd line arg as title to search directly for
-        titles.append(input)
+        item = {
+            ID: "NA",
+            TITLE: input
+        }
+        search_records.append(item)
 
     # search on title - only initial top 10 results from Google
     hdr_shown = False
-    for title in titles:
-        results = search(title)
-        #print(results)
+    results = []
+
+    for rec in search_records:
+        #print("Searching: " + rec[ID] + "-" + rec[TITLE])
+        results = search(rec[TITLE])
+        time.sleep(THROTTLE_SECS)   # avoid being blocked by google - rate limit calls
 
         # check direct or partial ratio match on title
         for result in results:
-            if title in result["title"] is False:
+            if rec[TITLE] in result["title"] is False:
                 continue
 
-            direct = fuzz.ratio(title, result["title"])
-            partial = fuzz.partial_ratio(title, result["title"])
+            direct = fuzz.ratio(rec[TITLE], result["title"])
+            partial = fuzz.partial_ratio(rec[TITLE], result["title"])
 
             # output results
             if not hdr_shown:
-                print("Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
+                print("Paper ID,", "Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
                 hdr_shown = True
-            print("%s,%s,%.2f,%.2f,%s" % (title, result["title"], direct, partial, result["link"]))
+            print("%s,\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], direct, partial, result["link"]))
 
     sys.exit(0)
 
+# ==========================
+# Global Variables
+# ==========================
 SEARCH_URL = "https://google.com/search?"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
-FILE_SEARCH_HDRS = ['Manuscript ID', 'Manuscript Title']
+ID = "Manuscript ID"
+TITLE = "Manuscript Title"
+FILE_SEARCH_HDRS = [
+    ID,
+    TITLE
+]
+THROTTLE_SECS = 1
 
 if __name__ == "__main__":
     main()
