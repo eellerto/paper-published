@@ -24,6 +24,7 @@ import io, os, sys, csv, time
 import puremagic
 import urllib.parse
 import xlrd, mmap
+import xlsxwriter as xs
 from bs4 import BeautifulSoup
 from fuzzywuzzy import fuzz
 
@@ -193,6 +194,10 @@ def main():
     hdr_shown = False
     results = []
 
+    # output results to XLSX file
+    wb = xs.Workbook("paper-published.xlsx")    # TODO timestamp file unique
+    ws = wb.add_worksheet()
+
     for rec in search_records:
         #print("Searching: " + rec[ID] + "-" + rec[TITLE])
         results = search(rec[TITLE])
@@ -209,8 +214,16 @@ def main():
             # output results
             if not hdr_shown:
                 print("Paper ID,", "Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
+                ws.write(0, 0, "Paper ID")
+                ws.write(0, 1, "Paper Title")
+                ws.write(0, 2, "Search Title")
+                ws.write(0, 3, "Direct Match")
+                ws.write(0, 4, "Partial Match")
+                ws.write(0, 5, "Link")
                 hdr_shown = True
             print("%s,\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], direct, partial, result["link"]))
+
+    wb.close()
 
     sys.exit(0)
 
