@@ -225,6 +225,7 @@ def main():
                 ws.write(row, 4, "Partial Match", bold)
                 ws.write(row, 5, "Link", bold)
                 hdr_shown = True
+
             print("%s,\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], direct, partial, result["link"]))
             row += 1
             ws.write(row, 0, rec[ID])
