@@ -20,7 +20,7 @@
 # ********************************************************
 
 import requests
-import io, os, sys, csv, time
+import io, os, sys, csv, time, calendar
 import puremagic
 import urllib.parse
 import xlrd, mmap
@@ -194,9 +194,13 @@ def main():
     hdr_shown = False
     results = []
 
-    # output results to XLSX file
-    wb = xs.Workbook("paper-published.xlsx")    # TODO timestamp file unique
+    # output results to XLSX file named current timestamp
+    ts = calendar.timegm(time.gmtime())
+    wb = xs.Workbook("paper-published-" + str(ts) +".xlsx")
     ws = wb.add_worksheet()
+    # Add a bold format to use to highlight cells.
+    bold = wb.add_format({'bold': True})
+    row = 0
 
     for rec in search_records:
         #print("Searching: " + rec[ID] + "-" + rec[TITLE])
@@ -214,14 +218,21 @@ def main():
             # output results
             if not hdr_shown:
                 print("Paper ID,", "Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
-                ws.write(0, 0, "Paper ID")
-                ws.write(0, 1, "Paper Title")
-                ws.write(0, 2, "Search Title")
-                ws.write(0, 3, "Direct Match")
-                ws.write(0, 4, "Partial Match")
-                ws.write(0, 5, "Link")
+                ws.write(row, 0, "Paper ID", bold)
+                ws.write(row, 1, "Paper Title", bold)
+                ws.write(row, 2, "Search Title", bold)
+                ws.write(row, 3, "Direct Match", bold)
+                ws.write(row, 4, "Partial Match", bold)
+                ws.write(row, 5, "Link", bold)
                 hdr_shown = True
             print("%s,\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], direct, partial, result["link"]))
+            row += 1
+            ws.write(row, 0, rec[ID])
+            ws.write(row, 1, rec[TITLE])
+            ws.write(row, 2, result["title"])
+            ws.write(row, 3, direct)
+            ws.write(row, 4, partial)
+            ws.write_url(row, 5, result["link"], string=result["link"])
 
     wb.close()
 
