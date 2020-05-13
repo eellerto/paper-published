@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#-*- coding: utf-8 -*-
 
 # ********************************************************
 # Script validates if paper title was published or not.
