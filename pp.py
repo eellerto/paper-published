@@ -70,14 +70,20 @@ def search(paper_title=None):
     # parse HTTP response and pull out search results
     soup = BeautifulSoup(resp.content, "html.parser")
 
-    for g in soup.find_all('div', class_='r'):
+    for g in soup.find_all('div', class_='g'):
         anchors = g.find_all('a')
-        if anchors:
+        spans = g.find_all('span', class_='st')
+        if anchors and spans:
             link = anchors[0]['href']
             title = g.find('h3').text
+            description = spans[0].text
+            #print("Link ", link)
+            #print("Title", title)
+            #print("Description", description)
             item = {
                 "title": title,
-                "link": link
+                "link": link,
+                "description": description
             }
             results.append(item)
     return results
@@ -218,7 +224,7 @@ def main():
 
             # output results
             if not hdr_shown:
-                print("Paper ID,", "Paper Title,", "Search Title,", "Author, ", "MS Type, ", "Direct Match,", "Partial Match,", "Link")
+                print("Paper ID,", "Paper Title,", "Search Title,", "Author, ", "MS Type, ", "Direct Match,", "Partial Match,", "Link, ", "Description")
                 ws.write(row, 0, "Paper ID", bold)
                 ws.write(row, 1, "Paper Title", bold)
                 ws.write(row, 2, "Search Title", bold)
@@ -227,13 +233,15 @@ def main():
                 ws.write(row, 5, "Direct Match", bold)
                 ws.write(row, 6, "Partial Match", bold)
                 ws.write(row, 7, "Link", bold)
+                ws.write(row, 8, "Description", bold)
                 hdr_shown = True
 
             # ignore search results with poor mathes
             if partial < 60:
                 continue
 
-            print("%s,\"%s\",\"%s\",\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], rec[AUTHORS], rec[TYPE], direct, partial, result["link"]))
+            print("%s,\"%s\",\"%s\",\"%s\",\"%s\",%.2f,%.2f,%s,%s" % (rec[ID], rec[TITLE], result["title"], rec[AUTHORS], rec[TYPE], direct, partial, result["link"], result["description"]))
+
             row += 1
             ws.write(row, 0, rec[ID])
             ws.write(row, 1, rec[TITLE])
@@ -243,6 +251,7 @@ def main():
             ws.write(row, 5, direct)
             ws.write(row, 6, partial)
             ws.write_url(row, 7, result["link"], string=result["link"])
+            ws.write(row, 8, result["description"])
 
     wb.close()
 
