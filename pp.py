@@ -209,7 +209,7 @@ def main():
         time.sleep(THROTTLE_SECS)   # avoid being blocked by google - rate limit calls
 
         # check direct or partial ratio match on title
-        for result in results:
+        for result in results[0:1]:
             if rec[TITLE] in result["title"] is False:
                 continue
 
@@ -218,23 +218,31 @@ def main():
 
             # output results
             if not hdr_shown:
-                print("Paper ID,", "Paper Title,", "Search Title,", "Direct Match,", "Partial Match,", "Link")
+                print("Paper ID,", "Paper Title,", "Search Title,", "Author, ", "MS Type, ", "Direct Match,", "Partial Match,", "Link")
                 ws.write(row, 0, "Paper ID", bold)
                 ws.write(row, 1, "Paper Title", bold)
                 ws.write(row, 2, "Search Title", bold)
-                ws.write(row, 3, "Direct Match", bold)
-                ws.write(row, 4, "Partial Match", bold)
-                ws.write(row, 5, "Link", bold)
+                ws.write(row, 3, "Authors", bold)
+                ws.write(row, 4, "MS Type", bold)
+                ws.write(row, 5, "Direct Match", bold)
+                ws.write(row, 6, "Partial Match", bold)
+                ws.write(row, 7, "Link", bold)
                 hdr_shown = True
 
-            print("%s,\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], direct, partial, result["link"]))
+            # ignore search results with poor mathes
+            if partial < 60:
+                continue
+
+            print("%s,\"%s\",\"%s\",\"%s\",\"%s\",%.2f,%.2f,%s" % (rec[ID], rec[TITLE], result["title"], rec[AUTHORS], rec[TYPE], direct, partial, result["link"]))
             row += 1
             ws.write(row, 0, rec[ID])
             ws.write(row, 1, rec[TITLE])
             ws.write(row, 2, result["title"])
-            ws.write(row, 3, direct)
-            ws.write(row, 4, partial)
-            ws.write_url(row, 5, result["link"], string=result["link"])
+            ws.write(row, 3, rec[AUTHORS])
+            ws.write(row, 4, rec[TYPE])
+            ws.write(row, 5, direct)
+            ws.write(row, 6, partial)
+            ws.write_url(row, 7, result["link"], string=result["link"])
 
     wb.close()
 
@@ -247,9 +255,13 @@ SEARCH_URL = "https://google.com/search?"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0"
 ID = "Manuscript ID"
 TITLE = "Manuscript Title"
+AUTHORS ="Author Names"
+TYPE = "Manuscript Type"
 FILE_SEARCH_HDRS = [
     ID,
-    TITLE
+    TITLE,
+    AUTHORS,
+    TYPE
 ]
 THROTTLE_SECS = 1
 
