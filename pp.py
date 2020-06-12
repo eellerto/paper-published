@@ -193,6 +193,8 @@ def main():
         # invalid file not exist - treat cmd line arg as title to search directly via Google
         item = {
             ID: "NA",
+            AUTHORS: "NA",
+            TYPE: "NA",
             TITLE: input
         }
         search_records.append(item)
